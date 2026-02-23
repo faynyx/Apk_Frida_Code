@@ -1,23 +1,38 @@
-function copyFile(src, dst) {
+function copyfile(source, destination) {
     try {
-        var input = Java.use("java.io.FileInputStream").$new(src);
-        var output = Java.use("java.io.FileOutputStream").$new(dst);
+        const File = Java.use('java.io.File');
+        const FileInputStream = Java.use('java.io.FileInputStream');
+        const FileOutputStream = Java.use('java.io.FileOutputStream');
 
-        var buffer = Java.array('byte', new Array(4096));
-        var len;
+        const ProcessBuilder = Java.use("java.lang.ProcessBuilder");
 
-        while ((len = input.read(buffer)) != -1) {
-            output.write(buffer, 0, len);
+        const Runtime = Java.use('java.lang.Runtime');
+        Runtime.getRuntime().exec(`cp ${source} ${destination}`);
+
+        /*
+        var sourceFile = File.$new(source);
+
+        if (sourceFile.exists()) {
+            var inputStream = FileInputStream.$new(sourceFile);
+            var outputStream = FileOutputStream.$new(destination);
+            
+            // Basic buffer for copying
+            var buffer = Java.array('byte', new Array(1024).fill(0));
+            var bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) !== -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            
+            // Close streams
+            inputStream.close();
+            outputStream.close();
+            console.log('File copied successfully.');
+        } else {
+            console.log('Source file not found.');
         }
-
-        input.close();
-        output.close();
-
-        console.log("[copied] File copy " + src + " -> " + dst);
-        return true;
+            */
     } catch (e) {
-        console.log("[failed] Copy Failed : " + e);
-        return false;
+        console.log("exception : " + e);
     }
 }
 
@@ -41,7 +56,7 @@ Java.perform(function() {
 
     //const dex_init = DexClassLoader.$init
     const path_init = PathClassLoader.$init;
-    const inmemory_init = InMemoryDexClassLoader.$init;
+    //const inmemory_init = InMemoryDexClassLoader.$init;
 
     DexClassLoader.$init.implementation = function(dexPath, optimizedDirectory, librarySearchPath, parent) {
         console.log ("[call] DexClassLoader call");
@@ -49,7 +64,7 @@ Java.perform(function() {
 
         var out_path = "/sdcard/Download/" + basename_noext(dexPath);
 
-        //copyFile(dexPath, out_path);
+        copyfile(dexPath, out_path);
 
         return this.$init(dexPath, optimizedDirectory, librarySearchPath, parent);
     }
@@ -59,13 +74,22 @@ Java.perform(function() {
             console.log ("[call] PathClassLoader call");
             console.log ("[loading] Loding class path : " + arguments[0]);
 
-            var out_path = "/sdcard/Download/" + basename_noext(dexPath);
+            var out_path = "/storage/emulated/0/Download/" + basename_noext(dexPath);
 
-            copyFile(arguments[0], out_path);
+            copyfile(arguments[0], out_path);
 
             return overload.apply(this, arguments);
         }
     });
+
+    InMemoryDexClassLoader.overload("java.nio.ByteBuffer", "java.lang.ClassLoader").implementation = function(dexBuffers, parent) {
+        var castedBuffer = Java.cast(dexBuffers, Java.use("java.nio.ByteBuffer"));
+
+        var len = castedBuffer.capacity();
+        var bytes = Java.array('byte', new Array(len).fill(0));
+
+        castedBuffer.position(0);
+    }
 
     inmemory_init.overloads.forEach(function (overload) {
         overload.implementation = function() {
@@ -73,8 +97,4 @@ Java.perform(function() {
 
         }
     });
-
-    ClassLoader.loadClass.overload("java.lang.String").implementation = function (classNames) {
-        if (classn)
-    }
 });
