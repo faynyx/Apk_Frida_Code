@@ -3,6 +3,7 @@ function copyfile(source, destination) {
         const File = Java.use('java.io.File');
         const FileInputStream = Java.use('java.io.FileInputStream');
         const FileOutputStream = Java.use('java.io.FileOutputStream');
+        //const NFile = Java.use('java.nio.file');
 
         const ProcessBuilder = Java.use("java.lang.ProcessBuilder");
 
@@ -69,6 +70,18 @@ Java.perform(function() {
         return this.$init(dexPath, optimizedDirectory, librarySearchPath, parent);
     }
     
+    PathClassLoader.$init.overload("java.lang.String", "java.lang.ClassLoader").implementation = function(dexPath, parent) {
+        console.log ("[call] PathClassLoader call");
+        console.log ("[loading] Loading Class path : " + dexPath);
+
+        var out_path = "/sdcard/Download/" + basename_noext(dexPath);
+
+        copyfile(dexPath, out_path);
+
+        return this.$init(dexPath, parent);
+    }
+
+    /*
     path_init.overloads.forEach(function (overload) {
         overload.implementation = function() {
             console.log ("[call] PathClassLoader call");
@@ -81,20 +94,27 @@ Java.perform(function() {
             return overload.apply(this, arguments);
         }
     });
+    */
 
-    InMemoryDexClassLoader.overload("java.nio.ByteBuffer", "java.lang.ClassLoader").implementation = function(dexBuffers, parent) {
+    InMemoryDexClassLoader.$init.overload("java.nio.ByteBuffer", "java.lang.ClassLoader").implementation = function(dexBuffers, parent) {
         var castedBuffer = Java.cast(dexBuffers, Java.use("java.nio.ByteBuffer"));
+
+        console.log ("[call] InMemoryDexClassLoader call");
+        console.log ("[loading] Loading class binary");
 
         var len = castedBuffer.capacity();
         var bytes = Java.array('byte', new Array(len).fill(0));
 
-        castedBuffer.position(0);
+        castedBuffer.position(0); // init location
+        castedBuffer.get(bytes); // data copy
+        castedBuffer.position(0); // recovery
+        
+        var out_path = "/sdcard/Download/memory_dump.dex";
+        var FileOutputStream = Java.use("java.io.FileOutputStream");
+
+        var fos = FileOutputStream.$new(File.$new(out_path));
+
+        fos.write(bytes);
+        fos.create();
     }
-
-    inmemory_init.overloads.forEach(function (overload) {
-        overload.implementation = function() {
-            console.log ("[call] InMemoryDexClassLoader");
-
-        }
-    });
 });
