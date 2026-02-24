@@ -1,11 +1,39 @@
 //test
 
 Java.perform(function() {
+	const opendir = Module.findExportByName(null, "opendir"); 
+	const connect = Module.findExportByName(null, "connect");
     const fopen = Module.findExportByName(null, "fopen");
 
-    Interceptor.attach(fopen, {
-
+    Interceptor.attach(opendir, {
+		onEnter: function (args) {
+			this.path = Memory.readUtf8String(args[0]);
+			if (this.path.includes("/data/local/tmp")) {
+				console.log ("[Frida] /data/local/tmp");
+				const fake = Memory.writeUtf8String("bypass");
+				args[0] = fake;
+			}
+		},
+		onLeave: function(retVal) {
+			return retVal;
+		}
     })
+
+	Interceptor.attach(connect, {
+		onEnter: function (args) {
+			
+		},
+		onLeave: function(retVal) {
+			return retVal;
+		}
+	})
+
+	Interceptor.attach(fopen, {
+		onEnter: function (args) {
+			this.path = Memory.readUtf8String(args[0]);
+			if (this.path.includes(""))
+		}
+	})
 })
 
 Java.perform(function() {
