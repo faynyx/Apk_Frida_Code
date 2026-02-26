@@ -1,10 +1,12 @@
 Java.perform(function() {
-    const Build = Java.use("android.os.Build$VERSION");
+    // const Build = Java.use("android.os.Build$VERSION");
+    const Build = Java.use("android.os.Build"); 
     const File = Java.use("java.io.File");
     const PM = Java.use("android.app.ApplicationPackageManager");
     const Exception = Java.use("android.content.pm.PackageManager$NameNotFoundException");
     const Runtime = Java.use("java.lang.Runtime");
     const JString = Java.use("java.lang.String");
+    const SystemProperties = Java.use("android.os.SystemProperties");
 
     const root_package = ["com.topjohnwu.magisk", "eu.chainfire.supersu", "com.genymotion.superuser", "com.noshufou.android.su", "com.koushikdutta.superuser", "com.yellowes.su"]; 
     
@@ -13,10 +15,23 @@ Java.perform(function() {
 
     const guess_root_command = ["getprop", "mount", "build.prop", "id", "sh", "su"];
 
-    console.log(Build.SDK_INT.value);
+    if (Build.TYPE.value.toString() === "userdebug") {
+        Build.TYPE.value = "user";
+        console.log(Build.TYPE.value);
+    }
+
+    if (Build.TAGS.value.toString().indexOf("test-keys") !== -1) {
+        Build.TAGS.value = "release-keys";
+        console.log(Build.TAGS.value);
+    }
+
+    if (Build.FINGERPRINT.value.toString().indexOf("test-keys") !== -1) { // generic, aosp
+        Build.FINGERPRINT.value = Build.FINGERPRINT.value.replace("test-keys", "release-keys");
+        console.log(Build.FINGERPRINT.value);
+    }
 
     PM.getPackageInfo.overloads.forEach(function (ov) {
-        ov.implementation = function () {
+        ov.implementation = function () {rr
             var packageName = arguments[0];
 
             console.log("[call] getPackageInfo call and guess checking root packages : ", packageName);
@@ -95,7 +110,6 @@ Java.perform(function() {
             return ov.apply(this, arguments);
         }
     });
-
     /*
 
     if (Build.SDK_INT.value >= 33) {
