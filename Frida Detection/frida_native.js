@@ -38,7 +38,7 @@ Java.perform(function() {
 				args[0] = fake_maps;
 			}
 			
-			if (path.indexOf("/proc/" + pid + "/task") !== -1) { // check /proc/<pid>/tasks/<tid>
+			if (path.indexOf("/proc/" + pid + "/task") !== -1) { // check /proc/<pid>/tasks/<tid>/status
 				var fake_task = Memory.allocUtf8String("/proc/0/task");
 				args[0] = fake_task;
 			}
